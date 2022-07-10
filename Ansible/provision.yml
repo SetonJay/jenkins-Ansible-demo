@@ -1,0 +1,49 @@
+# provisions an AWS security group with ingress from our machine only
+# provisions an AWS EC2 instance - t2.xlarge / Ubuntu Server 20.04 LTS | 64-bit (x86)
+
+---
+- name: provision
+  connection: local
+  hosts: localhost
+  tasks:
+  - name: Create AWS security group
+    ec2_group:
+      region: "{{ region }}"
+      rules:
+        - proto: tcp
+          ports:
+            - 22
+          cidr_ip: "{{ my_ip }}/32"
+        - proto: tcp
+          ports: 
+            - 8080
+          cidr_ip: "{{ my_ip }}/32"
+      name: allow_ssh_jenkins_demo
+      description: ssh ingress rule for ec2 instance
+    register: sec_group_results
+  - name: Create AWS EC2 instance
+    ec2:
+      region: "{{ region }}"
+      key_name: "{{ key_name }}"
+      image: ami-0e84e211558a022c0 
+      instance_type: t2.xlarge
+      volumes:
+        - device_name: /dev/sda1
+          volume_type: gp2
+          volume_size: 8
+          delete_on_termination: true
+      group_id: "{{ sec_group_results.group_id }}"
+      instance_tags:
+        Name: jenkins-demo
+      wait: yes
+    register: ec2_results
+  - name: Add newly created instance to in-memory inventory
+    add_host:
+      name: "{{ ec2_results.instances[0].public_ip }}"
+      ansible_user: ubuntu
+  - set_fact: var_one="{{ ec2_results.instances[0].public_ip }}"
+  - name: Wait for SSH to come up
+    wait_for:
+      host: "{{ ec2_results.instances[0].public_ip }}"
+      port: 22
+      state: started

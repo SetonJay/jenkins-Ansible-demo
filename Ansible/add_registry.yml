@@ -1,0 +1,12 @@
+# adds a registry to Anchore Engine
+
+---
+- name: add_registry
+  connection: ssh
+  hosts: "{{ hostvars['localhost']['var_one'] }}"
+  become: True
+  tasks:
+    - name: Wait for Anchore Engine system
+      shell: "docker-compose exec api anchore-cli system wait"
+    - name: Add registry
+      shell: "docker-compose exec api anchore-cli registry add {{ registry }} {{ registry_user }} {{ registry_pass }}"

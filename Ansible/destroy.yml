@@ -1,0 +1,40 @@
+# destroys all infrastructure including EC2 instance, storage volume, and security group
+#
+# Variables required:
+#
+# export AWS_ACCESS_KEY_ID=<your_access_key> 
+# export AWS_SECRET_ACCESS_KEY=<your_secret_key>
+# export AWS_SESSION_TOKEN=<your_session_token>
+#
+# export AWS_PRIVATE_KEY=<path_to_your_private_key>         # e.g. ~/.ssh/mykey.pem
+# export AWS_REGION=<your_region>                           # e.g. us-east-2
+#
+# Usage:
+# 
+# ansible-playbook destroy.yml --private-key=$AWS_PRIVATE_KEY -e region=$AWS_REGION
+
+---
+- name: destroy
+  connection: local
+  hosts: localhost
+  tasks:
+  - name: get AWS EC2 instance ID of jenkins-demo that's currently running
+    ec2_instance_info:
+      region: "{{ region }}"
+      filters:
+        "tag:Name": jenkins-demo
+        "instance-state-name": running
+    register: ec2_instance_info_results
+  - name: terminate AWS EC2 instance
+    ec2:
+      region: "{{ region }}"
+      state: absent
+      instance_ids: "{{ ec2_instance_info_results.instances[0].instance_id }}"
+      wait: yes
+    register: ec2_results
+  - name: delete AWS security group
+    ec2_group:
+      region: "{{ region }}"
+      state: absent
+      name: allow_ssh_jenkins_demo
+    register: sec_group_results

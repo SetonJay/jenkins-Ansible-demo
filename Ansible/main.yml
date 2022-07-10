@@ -1,0 +1,30 @@
+# main.yml calls all the other plays except destroy.yml
+#
+# Variables required:
+#
+# export AWS_ACCESS_KEY_ID=<your_access_key> 
+# export AWS_SECRET_ACCESS_KEY=<your_secret_key>
+# export AWS_SESSION_TOKEN=<your_session_token>
+#
+# export AWS_PRIVATE_KEY=<path_to_your_private_key>         # e.g. ~/.ssh/mykey.pem
+# export AWS_KEYPAIR_NAME=<your_keypair_name>               # e.g. mykey
+# export AWS_REGION=<your_region>                           # e.g. us-east-2
+#
+# export REGISTRY=<your_hostname>                           # e.g. registry.gitlab.com/<group>/jenkins-demo
+# export REGISTRY_USER=<your_registry_username>
+# export REGISTRY_PASS=<your_registry_password>
+#
+# export ANSIBLE_HOST_KEY_CHECKING=False
+# export MY_IP=$(curl -s icanhazip.com)
+#
+# Usage:
+# 
+# ansible-playbook main.yml --private-key=$AWS_PRIVATE_KEY -e key_name=$AWS_KEYPAIR_NAME -e region=$AWS_REGION -e registry=$REGISTRY -e registry_user=$REGISTRY_USER -e registry_pass=$REGISTRY_PASS -e my_ip=$MY_IP
+
+---
+- name: provision
+  include: provision.yml
+- name: install
+  include: install.yml
+- name: add_registry
+  include: add_registry.yml
